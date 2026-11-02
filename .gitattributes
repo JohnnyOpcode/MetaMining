@@ -1,0 +1,5 @@
+# Publishing hygiene: shell scripts keep LF endings, Mojo files are
+# recognized for language statistics.
+*.sh text eol=lf
+*.mojo text diff=mojo linguist-language=Mojo
+*.cff text

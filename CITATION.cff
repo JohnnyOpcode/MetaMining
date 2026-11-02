@@ -1,0 +1,22 @@
+# Citation for MetaMining. Fill in repository-code and real authors
+# before publishing; the entity author below is a placeholder.
+cff-version: 1.2.0
+license: AGPL-3.0-only
+title: "MetaMining: pure-Mojo latent space explorer with topological shape views"
+version: 0.9.0
+date-released: 2026-10-31
+authors:
+  - name: "John Kost"
+abstract: >-
+  Parallel-branch survey instrument for language-model output space:
+  novelty/coherence scoring, Pareto frontiers, Vietoris-Rips topology
+  (Betti numbers, persistence barcodes, merge trees, Mapper), live
+  steering with per-thread stop rules, and replayable journals plus
+  research export bundles.
+keywords:
+  - latent-space-exploration
+  - quality-diversity
+  - topological-data-analysis
+  - persistent-homology
+  - llm-evaluation
+  - confabulation

@@ -1,0 +1,28 @@
+/bin/
+__pycache__/
+*.pyc
+/.playwright-browsers/
+
+# Local toolchains and editor debris (never commit).
+/.venv/
+/.mojo_cache/
+# Local embedding backend: llama.cpp server + GGUF weights (see embed-setup.sh).
+/tools/llama.cpp/
+/models/
+.DS_Store
+*~
+*.swp
+
+# Runtime state: never commit. Journals and veins are directory-local,
+# ever-growing run artifacts (also capped/pruned at runtime).
+/journals/
+/veins/
+# Name-based backstop: journal files anywhere outside the committed
+# benchmark set stay out, wherever a run or probe drops them.
+journal_*.json
+*_journal.json
+*.log
+
+# Committed benchmarks are the exception: curated, seeded, reviewed.
+!data/benchmarks/
+!data/benchmarks/**

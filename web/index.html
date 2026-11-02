@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MetaMining — Latent Claim Survey</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/app.css">
+<script src="/htmx.min.js"></script>
+<script src="/idiomorph-ext.min.js"></script>
+</head>
+<body hx-ext="morph">
+<header class="top">
+  <svg class="contours" viewBox="0 0 600 80" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M-20,62 C80,50 140,66 240,54 C340,42 420,60 520,48 C560,44 590,50 620,46" />
+    <path d="M-20,70 C90,60 170,74 270,64 C360,55 450,70 540,60 C575,57 595,61 620,58" />
+    <path d="M-20,52 C70,40 160,56 250,44 C350,32 430,50 530,38" />
+  </svg>
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+      <rect x="13" y="4" width="6" height="24" rx="1" />
+      <rect x="6" y="8" width="20" height="5" rx="1" />
+      <circle cx="16" cy="22" r="2.4" />
+    </svg>
+    <div>
+      <h1>MetaMining</h1>
+      <p>Latent Claim Survey</p>
+    </div>
+  </div>
+  <div class="run-pill" id="run-pill"><span class="dot"></span><span id="run-label">idle</span></div>
+  <div class="backend" id="backend-label">sim backend</div>
+  <button id="guide-btn" type="button" data-tip="Field guide: how MetaMining works">Guide</button>
+  <button id="archive-btn" type="button" data-tip="Browse and load saved expedition journals">Archive</button>
+</header>
+<div class="done-banner" id="done-banner" hidden>
+  <div>
+    <strong id="done-title">Expedition complete</strong>
+    <div class="done-sub" id="done-text"></div>
+  </div>
+  <button id="done-digest" type="button" data-tip="Copy the completion digest">Copy digest</button>
+</div>
+<main class="deck">
+  <section class="panel control" aria-label="Expedition control">
+    <h2>Expedition control</h2>
+    <form id="start-form" hx-post="/api/control" hx-swap="none" hx-disabled-elt="find button">
+      <input type="hidden" name="action" value="start">
+      <label>Seed concept
+        <textarea name="concept" rows="2" placeholder="The relationship between truth and confabulations"></textarea>
+      </label>
+      <label>Model
+        <input name="model" list="models" placeholder="muse-spark (blank = sim)" autocomplete="off">
+        <datalist id="models"></datalist>
+      </label>
+      <label>Models (per-branch, comma list)
+        <input id="start-models" name="models" list="models" placeholder="blank = all branches use Model" autocomplete="off">
+      </label>
+      <label>Endpoint
+        <input name="endpoint" type="text" placeholder="https://api.meta.ai/v1 (blank = sim)" autocomplete="off" spellcheck="false">
+      </label>
+      <label>Embed model
+        <input name="embed_model" type="text" placeholder="embeddings id (blank = hash vectors)" autocomplete="off" spellcheck="false">
+      </label>
+      <label>Embed endpoint
+        <input name="embed_endpoint" type="text" placeholder="http://127.0.0.1:8080/v1 (blank = chat endpoint)" autocomplete="off" spellcheck="false">
+      </label>
+      <label>API key
+        <input name="api_key" type="password" placeholder="uses server env key if blank" autocomplete="off">
+      </label>
+      <label>Server token
+        <input id="server-token" type="password" placeholder="server --auth-token (blank = none)" autocomplete="off">
+      </label>
+      <div class="grid2">
+        <label>Seed<input name="seed" inputmode="numeric" placeholder="7"></label>
+        <label>Branches<input name="branches" inputmode="numeric" placeholder="4"></label>
+        <label>Steps<input name="steps" inputmode="numeric" placeholder="100"></label>
+        <label data-tip="Novelty bar for gold; blank resolves by backend (0.5 sim, 0.8 live)">Gold &ge;<input name="gold" inputmode="decimal" placeholder="auto (0.5 sim · 0.8 live)"></label>
+        <label>Temp<input name="temp" inputmode="decimal" placeholder="0.9"></label>
+        <label data-tip="Beam width: top runners-up each step become their own pursued branches (1 = off)">Fanout<input id="start-fanout" name="fanout" inputmode="numeric" placeholder="1"></label>
+        <label>Judges <span class="sim-badge" id="sim-badge-start-judges" hidden>sim</span><input id="start-judges" name="judges" inputmode="numeric" placeholder="1"></label>
+        <label>Repulse <span class="sim-badge" id="sim-badge-start-repulse" hidden>sim</span><input id="start-repulse" name="repulse" inputmode="numeric" placeholder="30"></label>
+        <label>Budget<input id="start-budget" name="call_budget" inputmode="numeric" placeholder="blank = keep, 0 = unlimited"></label>
+      </div>
+      <details class="adv">
+        <summary>Advanced tuning (blank = keep server default)</summary>
+        <div class="grid2">
+          <label>Push<input name="push" inputmode="decimal" placeholder="0.9"></label>
+          <label>Plateau K<input name="plateau_k" inputmode="numeric" placeholder="12"></label>
+          <label>Plateau eps<input name="plateau_eps" inputmode="decimal" placeholder="0.005"></label>
+          <label>No-gold M<input name="nogold_m" inputmode="numeric" placeholder="25"></label>
+          <label>Min coh<input name="min_coh" inputmode="decimal" placeholder="0.25"></label>
+          <label>Coh C<input name="coh_c" inputmode="numeric" placeholder="6"></label>
+          <label>Global stall<input name="global_stall" inputmode="numeric" placeholder="40"></label>
+        </div>
+      </details>
+      <label class="check" data-tip="Epsilon-greedy auto-tune of temp/push during the run"><input id="start-auto" name="auto" type="checkbox" value="1"> Auto-tune</label>
+      <div class="btnrow">
+        <button class="go" type="submit">Start expedition</button>
+        <button class="go demo" type="button" id="demo-sim-btn" data-tip="One click, minutes of free action: max stops, fanout 2, fresh seed (sim)">Demo run (SIM)</button>
+        <button class="go demo live" type="button" id="demo-live-btn" data-tip="Short capped live taste: 2 branches x 5 steps, standard stops, 20-call budget (billed)">Demo run (LIVE)</button>
+      </div>
+    </form>
+    <form hx-post="/api/control" hx-swap="none" hx-disabled-elt="find button" hx-indicator="find .hx-spin" class="stopform">
+      <input type="hidden" name="action" value="stop">
+      <button class="stop" type="submit"><span class="hx-spin htmx-indicator" aria-hidden="true"></span>Stop run</button>
+    </form>
+    <h2>Live orders</h2>
+    <div class="ordergrid">
+      <form hx-post="/api/control" hx-swap="none" hx-disabled-elt="find button" hx-indicator="find .hx-spin"><input type="hidden" name="action" value="pause"><button class="mini" type="submit" data-tip="Freeze all branches mid-step"><span class="hx-spin htmx-indicator" aria-hidden="true"></span>Pause</button></form>
+      <form hx-post="/api/control" hx-swap="none" hx-disabled-elt="find button" hx-indicator="find .hx-spin"><input type="hidden" name="action" value="resume"><button class="mini" type="submit" data-tip="Resume a paused run"><span class="hx-spin htmx-indicator" aria-hidden="true"></span>Resume</button></form>
+      <form hx-post="/api/control" hx-swap="none" hx-disabled-elt="find button" hx-indicator="find .hx-spin"><input type="hidden" name="action" value="warp"><button class="mini" type="submit" data-tip="Force warp: backtrack to the Pareto frontier"><span class="hx-spin htmx-indicator" aria-hidden="true"></span>Warp</button></form>
+      <form hx-post="/api/control" hx-swap="none" hx-disabled-elt="find button" hx-indicator="find .hx-spin"><input type="hidden" name="action" value="restart"><button class="mini" type="submit" data-tip="Restart the expedition in place"><span class="hx-spin htmx-indicator" aria-hidden="true"></span>Restart</button></form>
+    </div>
+    <label class="bidrow" data-tip="Target branch for warp / teleport / lens / tune (applies to all order buttons)">Target branch
+      <select id="order-bid">
+        <option value="-1">all branches</option>
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+        <option value="11">11</option>
+        <option value="12">12</option>
+        <option value="13">13</option>
+        <option value="14">14</option>
+        <option value="15">15</option>
+      </select>
+    </label>
+    <form hx-post="/api/control" hx-swap="none" hx-disabled-elt="find button" hx-indicator="find .hx-spin" class="targetform">
+      <input type="hidden" name="action" value="boost">
+      <label>Boost budget to
+        <input name="call_budget" inputmode="numeric" placeholder="new total (0 = unlimited)" autocomplete="off">
+      </label>
+      <button class="mini wide" type="submit" data-tip="Raise the call budget and resume budget-dead branches as continuations"><span class="hx-spin htmx-indicator" aria-hidden="true"></span>Boost &amp; continue</button>
+    </form>
+    <form hx-post="/api/control" hx-swap="none" hx-trigger="change" hx-disabled-elt="find input" hx-indicator="#autopop-spin" class="popform">
+      <input type="hidden" name="action" value="autopop">
+      <label class="check" data-tip="Spawn vein-miners at gold strikes, respawn cold branches"><input id="autopop" name="enabled" type="checkbox" value="1" checked> Auto-population <span class="hx-dot htmx-indicator" id="autopop-spin" aria-hidden="true"></span></label>
+    </form>
+    <form hx-post="/api/control" hx-swap="none" hx-trigger="input changed throttle:400ms" hx-sync="closest form:abort" hx-indicator="#tune-spin" class="tuneform">
+      <input type="hidden" name="action" value="tune">
+      <label class="slider" data-tip="Sampling temperature, applied live">Temp <output id="tune-temp-v">0.90</output>
+        <input id="tune-temp" name="temp" type="range" min="0" max="2" step="0.05" value="0.9">
+      </label>
+      <label class="slider" data-tip="Novelty bar for gold, applied live">Gold <output id="tune-gold-v">0.90</output>
+        <input id="tune-gold" name="gold" type="range" min="0" max="1" step="0.01" value="0.9">
+      </label>
+      <label class="slider" data-tip="Topological push weight, applied live">Push <output id="tune-push-v">0.90</output>
+        <input id="tune-push" name="push" type="range" min="0" max="2" step="0.05" value="0.9">
+      </label>
+      <label class="slider" data-tip="Repulsion list cap: overused terms pushed out of prompts (0 = off), applied live">Repulse <span class="sim-badge" id="sim-badge-tune-repulse" hidden>sim</span> <output id="tune-repulse-v">30</output>
+        <input id="tune-repulse" name="repulse" type="range" min="0" max="40" step="1" value="30">
+      </label>
+      <label class="slider" data-tip="Beam width: strong runners-up fork into pursued branches (1 = best only), applied live">Fanout <output id="tune-fanout-v">1</output>
+        <input id="tune-fanout" name="fanout" type="range" min="1" max="8" step="1" value="1">
+      </label>
+      <label class="slider" data-tip="Judge votes per step, median blended (1-5), applied live">Judges <span class="sim-badge" id="sim-badge-tune-judges" hidden>sim</span> <output id="tune-judges-v">1</output>
+        <input id="tune-judges" name="judges" type="range" min="1" max="5" step="1" value="1">
+      </label>
+      <div class="sync-row"><span class="hx-dot htmx-indicator" id="tune-spin" aria-hidden="true"></span><span class="sync-t">live sync</span></div>
+    </form>
+    <form id="auto-form" class="popform" hx-post="/api/control" hx-swap="none" hx-trigger="change" hx-disabled-elt="find input">
+      <input type="hidden" name="action" value="auto">
+      <label class="check" data-tip="Epsilon-greedy auto-tune of temp/push, toggled live"><input id="auto-toggle" name="enabled" type="checkbox" value="1"> Auto-tune (live)</label>
+      <div class="auto-workers" id="auto-workers" hidden></div>
+    </form>
+    <form hx-post="/api/control" hx-swap="none" hx-disabled-elt="find button" hx-indicator="find .hx-spin" class="targetform">
+      <input type="hidden" name="action" value="teleport">
+      <label>Teleport to
+        <input name="target" type="text" placeholder="a new front..." autocomplete="off">
+      </label>
+      <button class="mini wide" type="submit"><span class="hx-spin htmx-indicator" aria-hidden="true"></span>Teleport</button>
+    </form>
+    <form hx-post="/api/control" hx-swap="none" hx-disabled-elt="find button" hx-indicator="find .hx-spin" class="targetform">
+      <input type="hidden" name="action" value="persona">
+      <label>Persona lens
+        <select name="idx">
+          <option value="0">Mechanistic Systems Biology &amp; Network Medicine</option>
+          <option value="1">Nonlinear Dynamics &amp; Bifurcation Theory</option>
+          <option value="2">Information Theory &amp; Algorithmic Complexity</option>
+          <option value="3">Persistent Homology &amp; Latent Topology</option>
+          <option value="4">Synthetic Epigenetics &amp; Bio-Computing</option>
+          <option value="5">Thermodynamics of Complex Adaptive Systems</option>
+          <option value="6">Surrealist Cybernetics &amp; Cognitive Architecture</option>
+          <option value="7">Fungal &amp; Mycelial Network Architectures</option>
+          <option value="8">Quantum Information &amp; Coherence Dynamics</option>
+          <option value="9">Crystalline Semiotics &amp; Structural Linguistics</option>
+          <option value="10">Deep-Sea Abyssal Xenobiology</option>
+          <option value="11">Evolutionary Game Theory &amp; Niche Construction</option>
+          <option value="12">Non-Euclidean Spatial Morphologies</option>
+          <option value="13">Material Science &amp; Metamaterial Engineering</option>
+          <option value="14">Category Theory &amp; Conceptual Translation</option>
+          <option value="15">Biomimetic Energy Dynamics</option>
+        </select>
+      </label>
+      <button class="mini wide" type="submit"><span class="hx-spin htmx-indicator" aria-hidden="true"></span>Switch lens</button>
+    </form>
+    <form id="setmodel-form" class="targetform" hx-post="/api/control" hx-swap="none" hx-disabled-elt="find button" hx-indicator="find .hx-spin">
+      <input type="hidden" name="action" value="setmodel">
+      <div class="grid2">
+        <label>Branch<input id="setmodel-bid" name="bid" inputmode="numeric" placeholder="0"></label>
+        <label>Model<input id="setmodel-model" name="model" list="models" placeholder="blank = default" autocomplete="off"></label>
+      </div>
+      <button class="mini wide" type="submit" data-tip="Live-switch one branch to another model"><span class="hx-spin htmx-indicator" aria-hidden="true"></span>Switch branch model</button>
+    </form>
+    <h2>Run stats <span class="fresh" id="fresh-stats"></span></h2>
+    <div id="stats" hx-get="/frag/stats" hx-trigger="load, mm:poll, every 12s" hx-swap="morph:innerHTML" hx-sync="this:abort"></div>
+    <a class="journal" id="journal" href="/api/journal" download="metamining-journal.json">Download journal JSON</a>
+  </section>
+  <section class="panel map" aria-label="Claim map">
+    <div class="map-head">
+      <h2>Claim map</h2>
+      <div class="map-tools">
+        <button id="mode-btn" type="button" data-tip="Toggle 2D / 3D projection">3D</button>
+        <button id="trails-btn" type="button" class="on" data-tip="Toggle branch trails">Trails</button>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="controls-3d" id="controls-3d" hidden>
+      <select id="mode3d" data-tip="3D render style">
+        <option value="surface">Shaded surface + path</option>
+        <option value="wireframe">Cyber wireframe terrain</option>
+        <option value="manifold">Iso-novelty manifold</option>
+        <option value="scatter">3D scatter cloud</option>
+      </select>
+      <select id="metric3d" data-tip="Z-axis elevation metric">
+        <option value="novelty">Z: Novelty</option>
+        <option value="pca_z">Z: PCA-Z</option>
+        <option value="cd">Z: Cohom dim</option>
+        <option value="coherence">Z: Coherence</option>
+        <option value="density">Z: Density</option>
+      </select>
+      <button id="balls3d" type="button" class="on" data-tip="Toggle finding markers">Balls</button>
+      <button id="gold3d" type="button" class="on" data-tip="Toggle gold markers">Gold</button>
+      <button id="paths3d" type="button" class="on" data-tip="Toggle branch paths (same as Trails)">Paths</button>
+      <div class="preset-group" role="group" aria-label="Camera presets">
+        <button id="cam-iso" type="button" data-tip="Isometric view">Iso</button>
+        <button id="cam-top" type="button" data-tip="Top-down plan view">Top</button>
+        <button id="cam-side" type="button" data-tip="Side profile view">Side</button>
+        <button id="cam-front" type="button" data-tip="Front cross-section">Front</button>
+      </div>
+      <button id="rot3d" type="button" data-tip="Toggle auto-orbit">Auto-orbit</button>
+      <button id="cam-reset" type="button" data-tip="Reset camera angle and zoom">Reset</button>
+    </div>
+    <div class="canvas-wrap"><canvas id="scatter"></canvas><div class="tip" id="tip" hidden></div>
+      <div class="hud-3d" id="hud-3d" hidden>
+        <span id="hud-combo">Surface · Novelty</span>
+        <span id="hud-range">Range: –</span>
+        <span id="hud-yaw">Yaw: 45°</span>
+        <span id="hud-pitch">Pitch: 30°</span>
+        <span id="hud-zoom">Zoom: 1.0x</span>
+        <span id="hud-points">Points: 0</span>
+      </div>
+    </div>
+    <div class="scrub-row">
+      <button id="play-btn" type="button" data-tip="Play / pause the expedition replay">Pause</button>
+      <input id="scrub" type="range" min="0" max="0" value="0" title="Scrub through expedition time">
+      <span id="scrub-label">live</span>
+      <label class="goldonly"><input id="gold-only" type="checkbox"> gold only</label>
+    </div>
+    <h2>Run diff</h2>
+    <div class="diff-panel" id="diff-panel">
+      <div class="diff-row">
+        <label class="diff-pick">Compare journal
+          <select id="diff-journal"><option value="">— none —</option></select>
+        </label>
+        <label class="check"><input id="diff-toggle" type="checkbox"> Overlay</label>
+      </div>
+      <div class="diff-legend" id="diff-legend" hidden><span class="diff-swatch"></span><span id="diff-status">no diff loaded</span></div>
+    </div>
+    <h2>Topology</h2>
+    <div class="topo" id="topo">
+      <div class="tcell" title="Connected components"><span class="k">b0</span><span class="v" id="topo-b0">–</span></div>
+      <div class="tcell" title="1-cycle loops (repetition rings)"><span class="k">loops b1</span><span class="v" id="topo-b1">–</span></div>
+      <div class="tcell" title="2-void cavities (unexplored chambers)"><span class="k">voids b2</span><span class="v" id="topo-b2">–</span></div>
+      <div class="tcell" title="Cohomological dimension"><span class="k">dim</span><span class="v" id="topo-cd">–</span></div>
+      <div class="tcell" title="Sheaf obstruction (trajectory curvature)"><span class="k">sheaf</span><span class="v" id="topo-sheaf">–</span></div>
+      <div class="tcell" title="Persistence entropy"><span class="k">entropy</span><span class="v" id="topo-entropy">–</span></div>
+      <div class="tcell" title="Branch/step of this readout"><span class="k">source</span><span class="v" id="topo-src">–</span></div>
+    </div>
+    <h2>Shape</h2>
+    <div class="shape-panel" id="shape-panel">
+      <div class="shape-row">
+        <label class="shape-view-wrap">View
+          <select id="shape-view" data-tip="Topological surface: merge tree, barcode, loops, density, Mapper graph, or timeline">
+            <option value="merge">Merge tree</option>
+            <option value="bars">Barcode + Betti</option>
+            <option value="loops">Loops + void</option>
+            <option value="density">Density + contours</option>
+            <option value="mapper">Mapper graph</option>
+            <option value="time">Timeline</option>
+          </select>
+        </label>
+        <button id="shape-refresh" type="button" data-tip="Recompute the current shape view">Refresh</button>
+        <label class="check"><input id="shape-live" type="checkbox" data-tip="Auto-refresh the current view every 12 seconds"> Live</label>
+        <span class="shape-note" id="shape-note"></span>
+      </div>
+      <div class="shape-ctls" id="shape-ctls-bars" hidden>
+        <label>Metric
+          <select id="shape-metric" data-tip="Vec-space distance for barcode and curves">
+            <option value="cosine">cosine</option>
+            <option value="euclid">euclid</option>
+          </select>
+        </label>
+        <label class="check"><input id="shape-conf" type="checkbox"> Confidence</label>
+      </div>
+      <div class="shape-ctls" id="shape-ctls-merge">
+        <label class="check"><input id="shape-basin" type="checkbox"> Basin tint on map</label>
+        <label>Basin <select id="shape-basinpick" data-tip="Target basin peak"></select></label>
+        <label>Branch <input id="shape-branch" type="number" min="0" value="0"></label>
+        <button id="shape-teleport" type="button" data-tip="Teleport this branch to the selected basin peak's claim">Teleport here</button>
+        <label>Branches <input id="shape-corbranches" type="text" value="0,1,2" data-tip="Comma-separated branch ids"></label>
+        <button id="shape-corroborate" type="button" data-tip="Teleport listed branches to the peak from spread persona lenses">Corroborate peak</button>
+      </div>
+      <div class="shape-ctls" id="shape-ctls-loops" hidden>
+        <label class="check"><input id="shape-loops-ol" type="checkbox" checked> Overlay loops on map</label>
+      </div>
+      <div class="shape-ctls" id="shape-ctls-density" hidden>
+        <label class="check"><input id="shape-contour-ol" type="checkbox" checked> Contour overlay on map</label>
+        <label>Levels <input id="shape-levels" type="number" min="2" max="10" value="5"></label>
+        <button id="shape-probe" type="button" data-tip="Suggest the next probe point (void or sparsest gap)">Suggest probe</button>
+        <label>Branch <input id="shape-probebranch" type="number" min="0" value="0"></label>
+        <button id="shape-probego" type="button" data-tip="Teleport this branch to the suggested probe's nearest claim">Probe it</button>
+      </div>
+      <div class="shape-ctls" id="shape-ctls-mapper" hidden>
+        <label>Bins <input id="shape-bins" type="number" min="2" max="24" value="8"></label>
+        <label>Overlap <input id="shape-overlap" type="number" min="0" max="0.9" step="0.05" value="0.4"></label>
+      </div>
+      <div class="canvas-wrap short"><canvas id="shape-canvas"></canvas></div>
+      <div class="shape-cap" id="shape-cap">Pick a view and press Refresh.</div>
+      <details class="shape-data" id="shape-data">
+        <summary>Data table (screen-reader friendly)</summary>
+        <div id="shape-table">No view computed yet.</div>
+      </details>
+      <div class="shape-row export-row">
+        <span class="shape-xlab">Export</span>
+        <button id="shape-exp-bundle" type="button" data-tip="Download one JSON: manifest, journal, state, all four topo surfaces">Bundle JSON</button>
+        <button id="shape-exp-csv" type="button" data-tip="Download findings as CSV for analysis">Findings CSV</button>
+        <button id="shape-exp-mappng" type="button" data-tip="Download the claim map as PNG">Map PNG</button>
+        <button id="shape-exp-shapepng" type="button" data-tip="Download the current shape view as PNG">Shape PNG</button>
+        <button id="shape-exp-shapesvg" type="button" data-tip="Download the current shape view as vector SVG">Shape SVG</button>
+        <button id="shape-exp-methods" type="button" data-tip="Copy a methods paragraph for this run to the clipboard">Methods</button>
+      </div>
+    </div>
+    <h2>API <span class="sim-badge" id="sim-badge-api" hidden>sim</span></h2>
+    <div class="topo" id="api">
+      <div class="tcell" title="Responses calls this run"><span class="k">calls</span><span class="v" id="api-calls">–</span></div>
+      <div class="tcell" title="Mean flight time per call"><span class="k">avg ms</span><span class="v" id="api-ms">–</span></div>
+      <div class="tcell" title="Completion tokens per second of flight time"><span class="k">tok/s</span><span class="v" id="api-tps">–</span></div>
+      <div class="tcell" title="Input tokens billed"><span class="k">in</span><span class="v" id="api-in">–</span></div>
+      <div class="tcell" title="Output tokens billed"><span class="k">out</span><span class="v" id="api-out">–</span></div>
+      <div class="tcell" title="Embedding calls"><span class="k">emb</span><span class="v" id="api-emb">–</span></div>
+      <div class="tcell" title="Estimated spend this run (Meta list prices)"><span class="k">cost</span><span class="v" id="api-cost">–</span></div>
+    </div>
+    <h2>Telemetry</h2>
+    <div class="tele-note">amber novelty · teal coherence÷10 · dashed gold bar</div>
+    <div class="canvas-wrap short"><canvas id="telemetry"></canvas></div>
+    <div class="tele-note">betti history: teal b0 · amber b1 · violet b2 per finding</div>
+    <div class="canvas-wrap short slim"><canvas id="betti-strip"></canvas></div>
+    <h2>Search</h2>
+    <div class="search-panel" id="search-panel">
+      <div class="search-row">
+        <label class="search-wrap" data-tip="Search findings, vein memory, and journals (hash-BOW cosine)"><input id="search-q" type="text" placeholder="Search claims, veins, journals..." autocomplete="off"></label>
+        <button id="search-btn" type="button">Search</button>
+      </div>
+      <div class="search-count" id="search-count"></div>
+      <ol class="log search-results" id="search-results"></ol>
+    </div>
+    <h2>Expedition log</h2>
+    <div class="feed-controls">
+      <label class="feed-search-wrap" data-tip="Search finding text, branch, or step"><input id="feed-search" type="text" placeholder="Search findings..." autocomplete="off"></label>
+      <div class="pills" role="group" aria-label="Feed filter">
+        <button id="pill-all" class="pill active" type="button" data-filter="all">All</button>
+        <button id="pill-gold" class="pill" type="button" data-filter="gold">Gold</button>
+        <button id="pill-loops" class="pill" type="button" data-filter="loops">Loops</button>
+      </div>
+      <button id="load-journals-btn" type="button" data-tip="Browse and load saved expedition journals">Load Journal JSONs</button>
+      <span id="feed-count" class="feed-count">0 entries</span>
+    </div>
+    <ol class="log" id="log"></ol>
+  </section>
+  <section class="panel side" aria-label="Threads and gold">
+    <h2>Threads <span class="fresh" id="fresh-threads"></span></h2>
+    <div id="threads" hx-get="/frag/threads" hx-trigger="load, mm:poll, every 12s" hx-swap="morph:innerHTML" hx-sync="this:abort"></div>
+    <div class="sec-head">
+      <h2>Gold veins <span class="fresh" id="fresh-gold"></span></h2>
+      <button id="copy-gold-thread" type="button" data-tip="Copy all gold finds as a thread">Copy thread</button>
+    </div>
+    <div id="gold" hx-get="/frag/gold" hx-trigger="load, mm:poll, every 12s" hx-swap="morph:innerHTML" hx-sync="this:abort"></div>
+    <h2>Pareto frontier</h2>
+    <div id="pareto"><div class="empty">No frontier yet.</div></div>
+    <h2>Vein memory</h2>
+    <div id="veins-panel"><div class="veins-count" id="veins-count"></div><div id="veins-list"></div></div>
+    <h2>Run queue</h2>
+    <div id="queue-panel">
+      <form hx-post="/api/control" hx-swap="none" hx-trigger="change" hx-disabled-elt="find input" class="autoqueform"><input type="hidden" name="action" value="autoque"><label class="check" data-tip="Auto-start the next queued run when one ends"><input id="queue-autoque" name="enabled" type="checkbox" value="1"> Auto-start queue</label></form>
+      <div class="queue-count" id="queue-count"></div>
+      <div id="queue-list"></div>
+      <form id="queue-form" class="targetform" hx-post="/api/control" hx-swap="none" hx-disabled-elt="find button" hx-indicator="find .hx-spin" hx-on::after-request="if(event.detail.successful){this.reset();}">
+        <input type="hidden" name="action" value="enqueue">
+        <label>Concept<textarea id="queue-concept" name="concept" rows="2" placeholder="Queued expedition concept" required></textarea></label>
+        <label>Model<input id="queue-model" name="model" list="models" placeholder="blank = default" autocomplete="off"></label>
+        <div class="grid2">
+          <label>Branches<input id="queue-branches" name="branches" inputmode="numeric" placeholder="4"></label>
+          <label>Steps<input id="queue-steps" name="steps" inputmode="numeric" placeholder="100"></label>
+        </div>
+        <button class="mini wide" type="submit"><span class="hx-spin htmx-indicator" aria-hidden="true"></span>Enqueue run</button>
+      </form>
+      <form hx-post="/api/control" hx-swap="none" hx-confirm="Clear all queued runs?" hx-disabled-elt="find button" hx-indicator="find .hx-spin" class="qclearform"><input type="hidden" name="action" value="clearqueue"><button class="mini wide dim" id="queue-clear" type="submit"><span class="hx-spin htmx-indicator" aria-hidden="true"></span>Clear queue</button></form>
+    </div>
+    <h2>Genealogy</h2>
+    <div id="tree-panel"><div class="tree-count" id="tree-count"></div><div class="tree-view" id="tree-view"></div></div>
+  </section>
+</main>
+<div class="overlay" id="node-modal" hidden>
+  <div class="modal" role="dialog" aria-label="Finding detail">
+    <div class="modal-head">
+      <div>
+        <strong id="modal-title">Finding</strong>
+        <div class="modal-sub" id="modal-subtitle"></div>
+      </div>
+      <button id="node-close" type="button">Close</button>
+    </div>
+    <div class="node-metrics" id="modal-metrics"></div>
+    <div class="node-body" id="modal-body"></div>
+    <div class="node-next" id="modal-next-row">Next: <span id="modal-next"></span></div>
+    <div class="node-related" id="modal-related" hidden>
+      <div class="node-related-title">Related veins</div>
+      <div id="related-list"></div>
+    </div>
+    <div class="node-actions">
+      <div class="node-copies">
+        <button id="modal-copy-raw" type="button">Copy raw</button>
+        <button id="modal-copy-social" type="button">Copy social</button>
+      </div>
+      <div class="node-nav">
+        <button id="modal-prev" type="button">Prev step</button>
+        <button id="modal-next-btn" type="button">Next step</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="archive-modal" hidden>
+  <div class="modal wide" role="dialog" aria-label="Journal archive">
+    <div class="modal-head">
+      <div>
+        <strong>Journal archive</strong>
+        <div class="modal-sub">Browse, load, and combine saved expedition journals. <span id="archive-count">Scanning...</span></div>
+      </div>
+      <button id="archive-close" type="button">Close</button>
+    </div>
+    <div class="archive-upload">
+      <div>
+        <div class="archive-upload-title">Save current run</div>
+        <div class="archive-upload-sub">Write the live expedition journal to the archive.</div>
+      </div>
+      <button id="archive-save-btn" type="button" data-tip="Save the current run as a journal file">Save run</button>
+    </div>
+    <div class="archive-upload">
+      <div>
+        <div class="archive-upload-title">Upload custom journal JSON</div>
+        <div class="archive-upload-sub">Bring a local expedition journal file into the dashboard.</div>
+      </div>
+      <label class="upload-mode">Mode
+        <select id="upload-mode">
+          <option value="replace">Replace</option>
+          <option value="merge">Merge</option>
+        </select>
+      </label>
+      <button id="archive-upload-btn" type="button">Choose file</button>
+      <input type="file" id="journal-file-input" accept=".json" hidden>
+    </div>
+    <div id="archive-list" class="archive-list"><div class="empty">Loading archived sessions...</div></div>
+  </div>
+</div>
+<div class="overlay" id="guide-modal" hidden>
+  <div class="modal" role="dialog" aria-label="Field guide">
+    <div class="modal-head">
+      <strong>Field guide: MetaMining</strong>
+      <button id="guide-close" type="button">Close</button>
+    </div>
+    <p class="modal-sub">How MetaMining surveys latent claims across parallel branches to find high-value veins.</p>
+    <div class="guide-grid">
+      <div class="guide-card">
+        <div class="guide-title">1. Branches, not single steps</div>
+        <div class="guide-desc">Every expedition runs several branches in parallel, each identified by branch and step (b2 s14). The claim map colors branches so diverging lines of inquiry stay visible.</div>
+      </div>
+      <div class="guide-card">
+        <div class="guide-title">2. Novelty and coherence</div>
+        <div class="guide-desc">Each finding scores novelty (how far it sits from visited claims) and coherence (how well it holds together). Findings above the gold bar on both axes are flagged as gold veins.</div>
+      </div>
+      <div class="guide-card">
+        <div class="guide-title">3. Topology radar</div>
+        <div class="guide-desc">Betti numbers track the shape of explored space: b1 loops mean a branch is circling old ground, b2 voids mark unexplored chambers worth pushing into. Highlighted cells need attention.</div>
+      </div>
+      <div class="guide-card">
+        <div class="guide-title">4. Pareto frontier and sharing</div>
+        <div class="guide-desc">The frontier lists non-dominated finds: no other finding beats them on both novelty and coherence. Copy any entry raw or formatted, or take the whole gold thread when the run completes.</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toasts" aria-live="polite"></div>
+<div id="sel-popup" hidden><button id="sel-copy" type="button">Copy selection for social</button></div>
+<script src="/app.js"></script>
+</body>
+</html>
