@@ -20,3 +20,4 @@ shape signatures qualitatively across states, exactly within one.
 - seed concept: `what caused the 1847 Ten Hours Act amendments to fail`
 - branches=3 steps=8 seed=21 (all else default)
 - observed shape @0.9.0: findings=32 gold=2 peaks=2 h1bars=6 loops=0 b1=0 void=True mapper=6n/2l
+

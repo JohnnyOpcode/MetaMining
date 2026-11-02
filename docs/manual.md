@@ -681,3 +681,4 @@ server never initiates); `GET /mcp` holds a stream for clients that
 insist on one; `DELETE /mcp` answers 204; session ids are issued but
 never enforced; browser `Origin` headers must be loopback or match
 `Host`. No resources/prompts in v1 — everything is a tool.
+
