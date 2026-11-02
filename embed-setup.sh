@@ -195,6 +195,7 @@ EOF
 do_serve() {
   SRV=$(pick_server) || { echo "run ./embed-setup.sh first" >&2; exit 1; }
   [ -s "$GGUF_FILE" ] || { echo "missing $GGUF_FILE, run ./embed-setup.sh first" >&2; exit 1; }
+  HOST="${EMBED_HOST:-127.0.0.1}"
   # Nomic v1.5 wants mean pooling over 768 dims; 2048 ctx is plenty
   # for findings and keeps memory modest (~1GB with the Q8_0 weights).
   # A CUDA build offloads every layer: the whole 137M-param model fits
@@ -204,14 +205,14 @@ do_serve() {
     || ls "$TOOLS_DIR"/libggml-cuda*.so >/dev/null 2>&1; then
     if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1; then
       NGL="-ngl 99"
-      echo "embedding server on http://127.0.0.1:$PORT (nomic v1.5 Q8_0, CUDA, full offload)"
+      echo "embedding server on http://$HOST:$PORT (nomic v1.5 Q8_0, CUDA, full offload)"
     else
       echo "warning: CUDA build but no working GPU, serving on CPU anyway" >&2
     fi
   fi
-  [ -z "$NGL" ] && echo "embedding server on http://127.0.0.1:$PORT (nomic v1.5 Q8_0, mean pooling)"
+  [ -z "$NGL" ] && echo "embedding server on http://$HOST:$PORT (nomic v1.5 Q8_0, mean pooling)"
   # shellcheck disable=SC2086
-  exec "$SRV" -m "$GGUF_FILE" --host 127.0.0.1 --port "$PORT" \
+  exec "$SRV" -m "$GGUF_FILE" --host "$HOST" --port "$PORT" \
     -c 2048 --embedding --pooling mean $NGL
 }
 

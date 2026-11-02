@@ -65,6 +65,13 @@ The live version is `0.9.0` (`./bin/metamining --version`).
   builds and serves on 8000), `.github/workflows/gate.yml` CI running
   `./test.sh`, actionable `mojo not found` guards in `build.sh` /
   `test.sh`, and a prerequisites box in the quickstart.
+- Portable release bundle: binary + Mojo runtime libs + `web/` + launcher
+  (`metamining-0.9.0-linux-x86_64.tar.gz`, boots standalone, verified
+  with a sim smoke run).
+- `compose.yml` + `Dockerfile.embed`: app with a local llama.cpp
+  embedding sidecar (Nomic Q8_0), pre-wired; `EMBED_HOST` support in
+  `embed-setup.sh` for container networking.
+- `docs/images/social-preview.png`: 1280x640 repo card (upload in About).
 
 ## [0.9.0] - 2026-10-31
 

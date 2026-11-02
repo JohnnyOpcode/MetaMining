@@ -1,6 +1,6 @@
 # MetaMining — pure-Mojo latent space explorer
 
-[![gate](https://github.com/JohnnyOpcode/MetaMining/actions/workflows/gate/badge.svg)](https://github.com/JohnnyOpcode/MetaMining/actions/workflows/gate)
+[![gate](https://github.com/JohnnyOpcode/MetaMining/actions/workflows/gate.yml/badge.svg)](https://github.com/JohnnyOpcode/MetaMining/actions/workflows/gate.yml)
 [![license](https://img.shields.io/badge/license-AGPL--3.0--only-blue)](LICENSE)
 [![version](https://img.shields.io/badge/version-0.9.0-green)](CHANGELOG.md)
 
@@ -83,6 +83,7 @@ Zero toolchain — Docker:
 ```bash
 docker build -t metamining .
 docker run --rm -p 8000:8000 metamining   # open http://127.0.0.1:8000
+docker compose up --build                 # full stack + local embeddings
 ```
 
 Native (needs the [Mojo toolchain](docs/dev-setup.md), one time):

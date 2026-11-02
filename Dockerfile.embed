@@ -1,0 +1,15 @@
+# MetaMining embed sidecar: llama.cpp server + Nomic v1.5 Q8_0 GGUF.
+# Built by compose.yml; not used standalone. Downloads the same
+# verified release assets as ./embed-setup.sh (CPU build).
+FROM ubuntu:24.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl unzip \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /srv
+COPY embed-setup.sh .
+RUN ./embed-setup.sh setup
+
+EXPOSE 8080
+CMD ["./embed-setup.sh", "serve"]

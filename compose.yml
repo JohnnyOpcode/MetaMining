@@ -1,0 +1,39 @@
+# MetaMining full stack: app + local embedding sidecar.
+#
+#   docker compose up --build        # app on http://127.0.0.1:8000
+#   docker compose down              # stop; journals/veins persist in volumes
+#
+# Sim runs work as-is. For live runs: META_API_KEY=... docker compose up.
+# First build downloads ~140MB of embedding weights plus the llama.cpp
+# server. The sidecar is a CPU build; for GPU, set EMBED_FLAVOR=cuda
+# in the embed service (needs the NVIDIA container runtime on the host).
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      META_API_KEY: ${META_API_KEY:-}
+    command: >
+      ./run.sh --host 0.0.0.0 --port 8000
+      --embed-endpoint http://embed:8080/v1
+      --embed-model nomic-embed-text-v1.5
+    depends_on:
+      - embed
+    volumes:
+      - mm-journals:/app/journals
+      - mm-veins:/app/veins
+
+  embed:
+    build:
+      context: .
+      dockerfile: Dockerfile.embed
+    expose:
+      - "8080"
+    environment:
+      EMBED_HOST: 0.0.0.0
+      EMBED_PORT: 8080
+
+volumes:
+  mm-journals:
+  mm-veins:
