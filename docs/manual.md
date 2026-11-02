@@ -643,6 +643,8 @@ scripting runs back-to-back). With `--auth-token` set, send
 
 ## 16. MCP server (drive MetaMining from an assistant)
 
+Full interface doc with guided examples: [docs/mcp.md](mcp.md).
+
 The running server is a **Model Context Protocol** server (Streamable
 HTTP, spec 2025-06-18, tools-only) at `POST /mcp`. Any MCP client —
 Claude Code, Codex, custom agents — can start expeditions, poll status,
@@ -681,4 +683,49 @@ server never initiates); `GET /mcp` holds a stream for clients that
 insist on one; `DELETE /mcp` answers 204; session ids are issued but
 never enforced; browser `Origin` headers must be loopback or match
 `Host`. No resources/prompts in v1 — everything is a tool.
+
+## 17. Housekeeping: caps, disk, backup
+
+Everything the server accumulates is bounded and directory-local
+(`journals/`, `veins/`). The bounds, and what gives way:
+
+| Store | Cap | Overflow policy |
+| ----- | --- | --------------- |
+| `journals/journal_*.json` | 100 files | Oldest deleted right after each save (logged as `journals pruned: N`) |
+| `veins/veins.json` | 1000 entries, flushed every 30 s | Oldest dropped, newest kept |
+| Findings in memory | 8000 newest | `next` stays an absolute total; stale `since` clamps to oldest retained |
+| Server log ring (`/api/log`) | 300 lines | Oldest dropped |
+| Run queue | 100 runs | Enqueue refused with `queue full (cap 100)` |
+| Topology complexes | 2000 triangles / 1000 tetrahedra | Trimmed with a `caps hit` note on the view |
+| Dashboard client | 2000 points (600 rendered) | Oldest dropped from the map |
+
+Journals are the disk-growth vector (large live runs reach tens of
+MB per file); the 100-file cap bounds the directory, not the
+bandwidth bill. Export what matters (Shape **Bundle JSON**, journal
+download, `save_journal` over MCP) and let pruning retire the rest.
+
+Safe to delete (stop the server first): `journals/*` (archive first
+if you care), `veins/veins.json` (resets steering memory — novelty
+scores will shift, which is the tutorial's lesson 1 about
+reproducibility), `bin/` (rebuilds). Never hand-edit
+`veins/veins.json` while the server runs; the 30 s flush overwrites it.
+
+Fresh start (reproduce a benchmark exactly): stop the server, remove
+`journals/` and `veins/`, start again, then load the benchmark file
+per [tutorial.md](tutorial.md) §1.
+
+Windows-side backup: `Backup-MetaMining.ps1` mirrors the whole WSL
+checkout to local disk with robocopy:
+
+```powershell
+.\Backup-MetaMining.ps1                          # defaults below
+.\Backup-MetaMining.ps1 -SourcePath <wsl-path> -DestinationPath C:\Backups\MM
+```
+
+Defaults: source `\\wsl.localhost\Ubuntu\home\dev\MetaMining`,
+destination `C:\MetaMining\MetaMining`. Full recursive copy
+(`/E`, attributes + timestamps, junctions excluded, 2 retries);
+robocopy exit codes ≥ 8 abort with an error. It copies everything,
+including `.venv/`, `tools/`, and `models/` — stop the server first
+so `veins.json` is settled.
 

@@ -1,0 +1,20 @@
+name: gate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Mojo toolchain
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install "mojo==1.2.0"
+      - name: Full gate
+        run: ./test.sh

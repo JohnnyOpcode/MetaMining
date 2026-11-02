@@ -1,0 +1,10 @@
+.venv/
+bin/
+journals/
+veins/
+tools/
+models/
+.playwright-browsers/
+__pycache__/
+*.pyc
+.git/

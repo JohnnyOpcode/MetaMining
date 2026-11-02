@@ -1,10 +1,10 @@
-# Citation for MetaMining. Fill in repository-code and real authors
-# before publishing; the entity author below is a placeholder.
+# Citation for MetaMining.
 cff-version: 1.2.0
 license: AGPL-3.0-only
 title: "MetaMining: pure-Mojo latent space explorer with topological shape views"
 version: 0.9.0
 date-released: 2026-10-31
+repository-code: "https://github.com/JohnnyOpcode/MetaMining"
 authors:
   - name: "John Kost"
 abstract: >-

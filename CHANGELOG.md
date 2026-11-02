@@ -50,6 +50,21 @@ The live version is `0.9.0` (`./bin/metamining --version`).
   11 tools covering expeditions, findings, search, topology, journals,
   and models. Verified against the official MCP SDK; `tests/test_mcp.mojo`
   plus self-test e2e checks; see manual §16.
+- `docs/mcp.md`: full MCP interface doc — setup, agent concepts, per-tool
+  argument/return reference, five guided examples (first contact, free
+  sim survey, capped live survey, search + topology, archive
+  archaeology), protocol/error notes, and troubleshooting.
+- `docs/dev-setup.md`: contributor setup — toolchain (`mojo==1.2.0` via
+  pip, `libssl3`), build/test/serve scripts, repo layout, conventions.
+- Manual §17 housekeeping: every retention cap (journals, veins,
+  findings, log, queue, complexes, client), safe-delete rules, fresh
+  start, and the Windows-side `Backup-MetaMining.ps1` backup.
+- Doc fixes: README Docs index lists `mcp.md`/`dev-setup.md`, Tests
+  count corrected to 13 suites, `CITATION.cff` gains `repository-code`.
+- Zero-toolchain paths: `Dockerfile` (Ubuntu + pip Mojo 1.2 + libssl3,
+  builds and serves on 8000), `.github/workflows/gate.yml` CI running
+  `./test.sh`, actionable `mojo not found` guards in `build.sh` /
+  `test.sh`, and a prerequisites box in the quickstart.
 
 ## [0.9.0] - 2026-10-31
 

@@ -7,14 +7,24 @@ This guide takes you from zero to a billed live run. (For the why, read
 
 ## 1. Start the server
 
+> **Prerequisites (one time):** the Mojo toolchain plus OpenSSL 3 —
+> `python3 -m venv .venv && .venv/bin/pip install "mojo==1.2.0"`
+> (full steps: [dev-setup.md](dev-setup.md)). Without it the scripts
+> stop with a pointer instead of a build. (Zero-toolchain option:
+> `docker build -t metamining .` then `docker run --rm -p
+> 8000:8000 metamining` — see `Dockerfile`.)
+
 ```bash
 cd ~/MetaMining
 ./metamining.sh                # embed server + MetaMining on http://127.0.0.1:8000
 ```
 
 One command starts everything, detached: the local embedding server
-(downloaded on first run) and MetaMining wired to it. `./metamining.sh stop`
-stops both; `./metamining.sh --no-embed` skips embeddings (hash vectors).
+(downloaded on first run, ~140MB of weights plus the llama.cpp server —
+a few minutes on decent wifi) and MetaMining wired to it.
+`./metamining.sh stop` stops both; `./metamining.sh --no-embed` skips
+embeddings (hash vectors) when the network is slow or you want the
+fastest possible first start.
 
 Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in a browser.
 

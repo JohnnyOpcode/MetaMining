@@ -1,5 +1,9 @@
 # MetaMining — pure-Mojo latent space explorer
 
+[![gate](https://github.com/JohnnyOpcode/MetaMining/actions/workflows/gate/badge.svg)](https://github.com/JohnnyOpcode/MetaMining/actions/workflows/gate)
+[![license](https://img.shields.io/badge/license-AGPL--3.0--only-blue)](LICENSE)
+[![version](https://img.shields.io/badge/version-0.9.0-green)](CHANGELOG.md)
+
 ![MetaMining claim map — surveyed points across the latent z-plane](docs/images/z_map.png)
 
 MetaMining sends a crew of expedition workers into an LLM's latent space,
@@ -15,9 +19,13 @@ expedition behind an HTMX dashboard.
   with a Bearer [REDACTED] `/v1/responses`, `/v1/models`, `/v1/embeddings` supported.
   Without a key it runs a deterministic sim backend (seeded templates +
   hash-BOW vectors) so the whole UI works offline.
+- **Driven by assistants**: the server is an MCP endpoint (Streamable
+  HTTP, 11 tools) — Claude Code can start expeditions, poll status, and
+  pull topology while you watch the map. See
+  [docs/mcp.md](docs/mcp.md).
 - **Under every rock**: each branch runs the full expedition loop
   independently — persona lenses, seed chaining, repulsion, LLM judge,
-  quantum warp; plateau, dry, incoherent, and weeds detectors stop
+  warp-to-frontier backtrack; plateau, dry, incoherent, and weeds detectors stop
   threads that get stuck, plus a global-weeds stop when the whole
   expedition stalls.
 - **Hive 10x**: branches share a global memory (novelty is scored against
@@ -31,6 +39,8 @@ expedition behind an HTMX dashboard.
   graph, run timeline — with 2D/3D overlays, close-loop actions
   (teleport, corroborate, probe-next), and one-click research export
   (bundle JSON, CSV, PNG/SVG, methods paragraph).
+
+![Live sim expedition filling the claim map](docs/images/demo.gif)
 
 ## Docs
 
@@ -49,8 +59,33 @@ expedition behind an HTMX dashboard.
   runnable protocols, plus a methods checklist for papers.
 - [docs/demo-script.md](docs/demo-script.md) — narrated 7-minute video
   tour, scene by scene with recording tips.
+- [docs/mcp.md](docs/mcp.md) — MCP server interface: setup, tool
+  reference, guided examples, protocol and errors.
+- [docs/dev-setup.md](docs/dev-setup.md) — contributor setup: toolchain,
+  build, test gate, scripts, and repo layout.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    U[Browser dashboard<br/>HTMX + Canvas] <--> S[Mojo server<br/>HTTP + SSE + MCP]
+    A[AI assistant<br/>MCP client] <--> S
+    S <--> W[Forked workers<br/>branches x steps]
+    W --> M[Meta API<br/>responses + models]
+    W --> E[Embed server<br/>llama.cpp :8080]
+    S --> J[(journals/ + veins/)]
+```
 
 ## Quickstart
+
+Zero toolchain — Docker:
+
+```bash
+docker build -t metamining .
+docker run --rm -p 8000:8000 metamining   # open http://127.0.0.1:8000
+```
+
+Native (needs the [Mojo toolchain](docs/dev-setup.md), one time):
 
 ```bash
 ./metamining.sh            # start everything: embed server + MetaMining on :8000
@@ -92,6 +127,10 @@ scatter), with branch trails, KDE density heat, time scrubber + replay,
 gold-only mode, branch filters, hover tooltips, and run-diff overlay of
 any saved journal. Five Z-axis metrics: novelty, PCA-Z, cohom dim,
 coherence, density.
+
+![Dashboard with 2D claim map, threads, and topology radar](docs/images/dash_2d.png)
+
+![3D terrain view with findings, gold markers, and trails](docs/images/dash_3d.png)
 
 **Topology radar + Betti strip.** Live b0/b1/b2 (components, loops,
 voids), complexity index, trajectory curvature, and persistence entropy
@@ -148,7 +187,7 @@ first Start to research export, written to record directly.
 ## Tests
 
 ```bash
-./test.sh             # 12 unit suites + loopback end-to-end self-test (154 checks)
+./test.sh             # 13 unit suites + loopback end-to-end self-test
 ./bin/metamining --self-test   # E2E only, against the built binary
 META_OFFLINE=1 ./test.sh       # skip the live-TLS handshake probe
 ```
@@ -190,7 +229,8 @@ CHANGELOG.md             Keep-a-Changelog release history
 ## HTTP surface
 
 - `POST /mcp` — MCP server (Streamable HTTP, 11 tools: expeditions,
-  findings, search, topology, journals, models; see manual §16)
+  findings, search, topology, journals, models; see manual §16 and
+  [docs/mcp.md](docs/mcp.md) for the full interface + guided examples)
 - `GET /` `/app.css` `/app.js` `/htmx.min.js` — dashboard assets
 - `GET /api/state` — run, config (never the key), workers + telemetry, topo,
   `api` totals (Responses calls/ms, embed calls/ms, billed tokens in/out)

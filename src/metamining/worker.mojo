@@ -2,7 +2,7 @@
 
 Each worker owns a branch: persona-lens prompts, seed chaining,
 KDE/lexical/topological novelty, judge-gated coherence, a gold
-vault, quantum warp, and energy camps. Reports finding / vec /
+vault, warp-to-frontier backtrack, and energy camps. Reports finding / vec /
 tele / status / done lines upstream; obeys order lines
 (pause/resume/warp/restart/teleport/persona/tune) downstream.
 
