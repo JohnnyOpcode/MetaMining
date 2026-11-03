@@ -3,6 +3,7 @@
 [![gate](https://github.com/JohnnyOpcode/MetaMining/actions/workflows/gate.yml/badge.svg)](https://github.com/JohnnyOpcode/MetaMining/actions/workflows/gate.yml)
 [![license](https://img.shields.io/badge/license-AGPL--3.0--only-blue)](LICENSE)
 [![version](https://img.shields.io/badge/version-0.9.0-green)](CHANGELOG.md)
+[![youtube](https://img.shields.io/badge/YouTube-John_Kost-red?logo=youtube)](https://www.youtube.com/@johnkost2514)
 
 ![MetaMining claim map — surveyed points across the latent z-plane](docs/images/z_map.png)
 
@@ -183,7 +184,8 @@ with steps, outputs, reporting checklists, and limits.
 
 A ready-made ~7-minute narrated tour lives in
 [docs/demo-script.md](docs/demo-script.md) — six timestamped scenes from
-first Start to research export, written to record directly.
+first Start to research export, written to record directly. Recorded
+walkthroughs live on [John Kost's YouTube channel](https://www.youtube.com/@johnkost2514).
 
 ## Tests
 

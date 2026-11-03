@@ -1,5 +1,7 @@
 # MetaMining demo script (for video, ~7 minutes)
 
+> Recorded walkthroughs: [youtube.com/@johnkost2514](https://www.youtube.com/@johnkost2514).
+>
 > Narrate over a live sim run (seed `why explanations persuade even when
 > wrong`, 3 branches × 12 steps — the bm1 benchmark protocol, so footage
 > matches the [tutorial](tutorial.md) numbers). Recording tip: run live
